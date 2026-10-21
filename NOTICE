@@ -1,0 +1,39 @@
+spectra8
+Copyright (C) 2026 CERN
+
+Author: Andreas Joachim Peters <andreas.joachim.peters@cern.ch>
+
+This product is licensed under the Apache License, Version 2.0
+(SPDX-License-Identifier: Apache-2.0); see LICENSE.
+
+The code in src/, include/, cli/, tests/, and tools/ is an independent
+implementation written in modern C++20. It builds on published and
+public-domain algorithmic techniques:
+  - LZ77 with recent-offset reuse and split token streams (Flash, Beam, Prism)
+  - Burrows-Wheeler / move-to-front block sorting and context mixing (Crystal, Prism)
+  - Asymmetric Numeral Systems (rANS / tANS, published into the public domain
+    by Jarek Duda)
+  - 12-state LZMA markov automaton, distance slot modeling, adaptive binary
+    range coding, and x86/ARM64 BCJ branch target normalization (originating
+    in the public-domain LZMA SDK by Igor Pavlov and 0BSD/public-domain
+    XZ Utils / liblzma by Lasse Collin; re-architected in Laser with a 5-stream
+    decoupled range decoder and nibble-split literal model)
+  - Fast 64-bit content hashing inspired by xxHashprime constants (Yann Collet)
+
+No third-party source code has been copied into src/, include/, cli/ or tests/.
+
+Third-party components:
+
+  third_party/libsais   - libsais, Copyright (c) 2021-2025 Ilya Grebnov,
+                          Apache License 2.0 (vendored; suffix array
+                          construction for the BWT paths).
+  third_party/bzip3     - bzip3, Copyright (c) Kamila Szewczyk,
+                          LGPL-3.0-or-later (optional git submodule used only
+                          when explicitly requested with -DSPECTRA8_BZIP3=BUNDLED;
+                          default builds produce pure Apache-2.0 binaries,
+                          only dynamically linking system libbzip3 if present).
+
+Optional link-time dependencies, not distributed with this project:
+zstd (BSD-3-Clause), xz / liblzma (0BSD / Public Domain),
+bzip3 (LGPL-3.0-or-later), sse2neon (MIT, fetched only with
+-DSPECTRA8_USE_SSE2NEON=ON).

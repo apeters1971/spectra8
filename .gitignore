@@ -1,0 +1,24 @@
+# Build output
+/build/
+/build-*/
+/cmake-build-*/
+
+# Stray local binaries
+/build_test
+/build_bench
+/build_cli
+*.lhc4
+*.o
+*.a
+*.dylib
+*.so
+*.so.*
+
+# Editor / OS
+.DS_Store
+.cache/
+compile_commands.json
+.token*
+
+# External benchmark data (e.g. Silesia corpus); fetched locally, not tracked
+/corpus/

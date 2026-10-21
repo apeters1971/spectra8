@@ -1,0 +1,3 @@
+[submodule "bzip3"]
+	path = third_party/bzip3
+	url = https://github.com/iczelia/bzip3.git
