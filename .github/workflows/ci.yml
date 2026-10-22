@@ -1,0 +1,89 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2026 CERN
+#
+# Build and test on the standard GitHub-hosted runners, plus AlmaLinux 9 and
+# 10 containers. Packaging and the cross-platform format corpus stay on the
+# GitLab pipeline.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu
+            os: ubuntu-24.04
+          - name: macOS
+            os: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ pkg-config libzstd-dev liblzma-dev
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake ninja zstd xz
+
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DSPECTRA8_BZIP3=AUTO
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  alma:
+    name: AlmaLinux ${{ matrix.version }}
+    runs-on: ubuntu-24.04
+    container: almalinux:${{ matrix.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Base GCC on Alma 9 is 11; the toolset is the C++20 compiler.
+          - version: "9"
+            gcc_toolset: gcc-toolset-13
+          - version: "10"
+            gcc_toolset: ""
+    steps:
+      - name: Install dependencies
+        run: |
+          dnf install -y epel-release dnf-plugins-core
+          dnf config-manager --set-enabled crb || true
+          dnf install -y gcc gcc-c++ cmake ninja-build git pkgconf-pkg-config libzstd-devel xz-devel
+          if [ -n "${{ matrix.gcc_toolset }}" ]; then
+            dnf install -y ${{ matrix.gcc_toolset }}-gcc-c++
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Configure, build, and test
+        run: |
+          if [ -n "${{ matrix.gcc_toolset }}" ]; then
+            source /opt/rh/${{ matrix.gcc_toolset }}/enable
+          fi
+          gcc -dumpfullversion
+          cmake --version
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DSPECTRA8_BZIP3=AUTO
+          cmake --build build
+          ctest --test-dir build --output-on-failure
